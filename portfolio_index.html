@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conall Mone — Software Engineer</title>
+<meta name="description" content="Conall Mone — C#/.NET software engineer and game AI enthusiast. Projects in full-stack development, AI-driven dialogue systems, and constraint-solving algorithms." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161f;
+    --bg-alt: #0f1017;
+    --surface: #1c1f2b;
+    --surface-line: #2b2f40;
+    --text: #ecece4;
+    --text-dim: #9497a8;
+    --accent: #e8a33d;
+    --accent-dim: #7a5c2a;
+    --teal: #4fb6a8;
+    --grid-line: rgba(236, 236, 228, 0.06);
+    --radius: 4px;
+    --display: 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  ::selection { background: var(--accent); color: var(--bg-alt); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px clamp(20px, 6vw, 64px);
+    background: rgba(20, 22, 31, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--surface-line);
+  }
+  .nav-mark {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .nav-links { display: flex; gap: 28px; font-family: var(--mono); font-size: 13px; }
+  .nav-links a { color: var(--text-dim); transition: color 0.2s; margin-left: 28px; }
+  .nav-links a:first-child { margin-left: 0; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 clamp(20px, 6vw, 64px);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    color: var(--teal);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2.6rem, 7vw, 5.5rem);
+    line-height: 1.02;
+    max-width: 16ch;
+    opacity: 0;
+    animation: fadeUp 0.7s ease forwards 0.1s;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p.lede {
+    margin-top: 28px;
+    max-width: 56ch;
+    color: var(--text-dim);
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    opacity: 0;
+    animation: fadeUp 0.7s ease forwards 0.22s;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.7s ease forwards 0.34s;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 12px 22px;
+    border-radius: var(--radius);
+    border: 1px solid var(--surface-line);
+    transition: border-color 0.2s, transform 0.2s, background 0.2s;
+    display: inline-block;
+  }
+  .btn-primary { background: var(--accent); color: var(--bg-alt); border-color: var(--accent); font-weight: 600; }
+  .btn-primary:hover { transform: translateY(-2px); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* decorative grid cells in hero */
+  .cell-field {
+    position: absolute;
+    top: 0; right: 0;
+    width: min(46vw, 520px);
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .cell-field div {
+    border: 1px solid var(--grid-line);
+    opacity: 0;
+    animation: solveIn 0.5s ease forwards;
+  }
+
+  @keyframes solveIn {
+    from { opacity: 0; background: transparent; }
+    to { opacity: 1; background: rgba(232, 163, 61, 0.03); }
+  }
+
+  /* ---------- Section shell ---------- */
+  section { padding: 96px clamp(20px, 6vw, 64px); }
+  .section-head { margin-bottom: 56px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 18px; height: 1px;
+    background: var(--teal);
+  }
+  .section-head h2 {
+    font-family: var(--display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 600;
+  }
+  .section-head p { color: var(--text-dim); max-width: 60ch; margin-top: 14px; }
+
+  /* ---------- Projects ---------- */
+  .projects-grid { display: flex; flex-direction: column; gap: 1px; background: var(--surface-line); border: 1px solid var(--surface-line); }
+  .project-card {
+    background: var(--bg);
+    padding: 40px clamp(20px, 4vw, 48px);
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 24px;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s ease, transform 0.6s ease, background 0.3s;
+  }
+  .project-card.in-view { opacity: 1; transform: translateY(0); }
+  .project-card:hover { background: var(--surface); }
+  .project-index {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent-dim);
+    padding-top: 4px;
+  }
+  .project-card.in-view .project-index { color: var(--accent); }
+  .project-title {
+    font-family: var(--display);
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 18px;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    border: 1px solid var(--surface-line);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+  .project-desc { color: var(--text-dim); max-width: 68ch; }
+  .project-links { margin-top: 22px; display: flex; gap: 22px; }
+  .project-links a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    border-bottom: 1px solid var(--surface-line);
+    padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .project-links a:hover { color: var(--accent); border-color: var(--accent); }
+  .project-links a.disabled { color: var(--text-dim); opacity: 0.55; pointer-events: none; }
+
+  @media (max-width: 640px) {
+    .project-card { grid-template-columns: 1fr; }
+    .project-index { padding-top: 0; }
+  }
+
+  /* ---------- About / skills ---------- */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+  }
+  .about-grid p { color: var(--text-dim); margin-bottom: 16px; max-width: 60ch; }
+  .about-grid p strong { color: var(--text); font-weight: 500; }
+  .skill-block { margin-bottom: 22px; }
+  .skill-block h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+  .skill-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-list span {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+  }
+  @media (max-width: 780px) { .about-grid { grid-template-columns: 1fr; } }
+
+  /* ---------- Contact / footer ---------- */
+  footer {
+    padding: 72px clamp(20px, 6vw, 64px) 48px;
+    border-top: 1px solid var(--surface-line);
+  }
+  footer h2 {
+    font-family: var(--display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin-bottom: 20px;
+  }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 8px; font-family: var(--mono); font-size: 14px; }
+  .footer-links a { color: var(--text-dim); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+  .footer-links a:hover { color: var(--accent); border-color: var(--accent); }
+  .footer-bottom {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--surface-line);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-mark">CM_</span>
+  <div class="nav-links">
+    <a href="#work">Work</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="cell-field" id="cellField" aria-hidden="true"></div>
+  <p class="hero-eyebrow">Software Engineer — Game AI &amp; Full-Stack</p>
+  <h1>I build systems that <span>think</span>, and games that respond.</h1>
+  <p class="lede">
+    Conall Mone — Computer Science graduate (2:1, Queen's University Belfast), currently
+    completing an MA in Game Design at Ulster University. I work across C#/.NET and
+    full-stack web, with a growing focus on AI-driven and constraint-based systems for games.
+  </p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="#work">View projects</a>
+    <a class="btn btn-ghost" href="#contact">Get in touch</a>
+  </div>
+</header>
+
+<section id="work">
+  <div class="section-head">
+    <div class="eyebrow">Selected work</div>
+    <h2>What im working on</h2>
+    <p>Full-stack engineering, applied AI, and constraint-solving — each pushed far enough to ship. Longer write-ups for each are linked as they go live.</p>
+  </div>
+
+  <div class="projects-grid">
+
+    <article class="project-card" data-index="1">
+      <span class="project-index">01</span>
+      <div>
+        <h3 class="project-title">Unity Game with Gemini AI Dialogue System</h3>
+        <div class="project-tags">
+          <span class="tag">Unity</span>
+          <span class="tag">C#</span>
+          <span class="tag">Google Gemini API</span>
+          <span class="tag">Real-time AI</span>
+        </div>
+        <p class="project-desc">
+          A Unity game integrating Google's Gemini AI to power a dynamic in-game chat system,
+          letting players interact with characters through natural, generative conversation
+          rather than fixed dialogue trees. Involved handling real-time API calls inside the
+          game loop, managing context between the engine and an external model, and designing
+          around the unpredictability of generative output.
+        </p>
+        <div class="project-links">
+          <a href="#" class="disabled" aria-disabled="true">Read the deep dive →</a>
+          <a href="#" class="disabled" aria-disabled="true">View on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="project-card" data-index="2">
+      <span class="project-index">02</span>
+      <div>
+        <h3 class="project-title">Bag of Homebrew</h3>
+        <div class="project-tags">
+          <span class="tag">C# / ASP.NET Core</span>
+          <span class="tag">React + TypeScript</span>
+          <span class="tag">PostgreSQL</span>
+          <span class="tag">Docker</span>
+        </div>
+        <p class="project-desc">
+          A full-stack RPG inventory and campaign-management application, designed, built and
+          deployed end to end. Google OAuth, drag-and-drop UI, real-time multiplayer campaigns
+          with role-based access control, file uploads, and a tiered freemium model —
+          containerised with Docker and deployed with automated database migrations.
+        </p>
+        <div class="project-links">
+          <a href="#" class="disabled" aria-disabled="true">Read the deep dive →</a>
+          <a href="#" class="disabled" aria-disabled="true">View on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="project-card" data-index="3">
+      <span class="project-index">03</span>
+      <div>
+        <h3 class="project-title">Logic Puzzle Generator &amp; Solver</h3>
+        <div class="project-tags">
+          <span class="tag">C#</span>
+          <span class="tag">Python</span>
+          <span class="tag">Backtracking</span>
+          <span class="tag">Constraint Satisfaction</span>
+        </div>
+        <p class="project-desc">
+          A web-based system that generates and solves logic puzzles — Sudoku, Einstein
+          puzzles — using constraint-based backtracking algorithms, built on an architecture
+          designed to extend to new puzzle types. The same search-and-constraint thinking
+          behind pathfinding and procedural generation in games.
+        </p>
+        <div class="project-links">
+          <a href="#" class="disabled" aria-disabled="true">Read the deep dive →</a>
+          <a href="#" class="disabled" aria-disabled="true">View on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section id="about">
+  <div class="section-head">
+    <div class="eyebrow">About</div>
+    <h2>Engineering, with a design lens</h2>
+  </div>
+  <div class="about-grid">
+    <div>
+      <p>
+        I trained as a <strong>Computer Scientist</strong> and worked professionally as a
+        <strong>full-stack C# developer</strong> before choosing to study Game Design —
+        a deliberate step to pair that engineering foundation with a more creative,
+        player-focused way of thinking about software.
+      </p>
+      <p>
+        My current interest sits at the intersection of <strong>AI systems and interactive
+        design</strong>: how generative and constraint-based approaches can make games feel
+        more responsive, and how to build that responsibly on top of solid engineering
+        fundamentals rather than as a bolt-on.
+      </p>
+    </div>
+    <div>
+      <div class="skill-block">
+        <h3>Languages</h3>
+        <div class="skill-list">
+          <span>C#</span><span>C++</span><span>C</span><span>Python</span>
+          <span>TypeScript</span><span>JavaScript</span><span>SQL</span>
+        </div>
+      </div>
+      <div class="skill-block">
+        <h3>Frameworks &amp; Engines</h3>
+        <div class="skill-list">
+          <span>ASP.NET</span><span>.NET MAUI</span><span>React</span>
+          <span>Unity</span><span>Unreal Engine</span>
+        </div>
+      </div>
+      <div class="skill-block">
+        <h3>Tools</h3>
+        <div class="skill-list">
+          <span>Git</span><span>Docker</span><span>Azure</span><span>PostgreSQL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="eyebrow">Get in touch</div>
+  <h2>Let's talk about what you're building.</h2>
+  <div class="footer-links">
+    <a href="mailto:conallmone1@gmail.com">conallmone1@gmail.com</a>
+    <a href="https://www.linkedin.com/in/conall-mone-66ab5222a" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="#" class="disabled" aria-disabled="true">GitHub</a>
+  </div>
+  <div class="footer-bottom">
+    <span>Conall Mone — Belfast, NI</span>
+    <span>Built by hand, deployed on GitHub Pages</span>
+  </div>
+</footer>
+
+<script>
+  // Hero decorative grid cells — staggered "solve" animation
+  const field = document.getElementById('cellField');
+  const total = 36;
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.style.animationDelay = (0.4 + Math.random() * 1.6) + 's';
+    field.appendChild(d);
+  }
+
+  // Reveal project cards on scroll
+  const cards = document.querySelectorAll('.project-card');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  cards.forEach((c) => io.observe(c));
+</script>
+
+</body>
+</html>
