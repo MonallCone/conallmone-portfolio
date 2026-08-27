@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Try_And_Break_Me: A Development and Reflection Blog — Conall Mone</title>
+<meta name="description" content="Building a horror game around a Constraint Resolution Engine, and what it taught me about coherence, ethics, and keeping the author in control." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161f;
+    --bg-alt: #0f1017;
+    --surface: #1c1f2b;
+    --surface-line: #2b2f40;
+    --text: #ecece4;
+    --text-dim: #9497a8;
+    --accent: #e8a33d;
+    --accent-dim: #7a5c2a;
+    --teal: #4fb6a8;
+    --grid-line: rgba(236, 236, 228, 0.06);
+    --radius: 4px;
+    --display: 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.7;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  a { color: inherit; }
+  ::selection { background: var(--accent); color: var(--bg-alt); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px clamp(20px, 6vw, 64px);
+    background: rgba(20, 22, 31, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--surface-line);
+  }
+  .nav-mark { font-family: var(--mono); font-size: 14px; color: var(--accent); letter-spacing: 0.05em; text-decoration: none; }
+  .nav-back {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); }
+
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px clamp(20px, 6vw, 64px) 120px;
+  }
+
+  .post-eyebrow {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .post-eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--teal); }
+
+  h1.post-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.12;
+    margin-bottom: 18px;
+  }
+
+  p.post-dek {
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    max-width: 62ch;
+    margin-bottom: 30px;
+  }
+
+  .post-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 48px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    border: 1px solid var(--surface-line);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+
+  .post-links { display: flex; gap: 22px; margin-bottom: 56px; padding-bottom: 40px; border-bottom: 1px solid var(--surface-line); }
+  .post-links a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--surface-line);
+    padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .post-links a:hover { color: var(--accent); border-color: var(--accent); }
+
+  article h2 {
+    font-family: var(--display);
+    font-size: clamp(1.4rem, 3vw, 1.7rem);
+    font-weight: 600;
+    margin: 52px 0 18px;
+    padding-top: 4px;
+  }
+  article h2:first-of-type { margin-top: 0; }
+
+  article p {
+    color: #d6d6cc;
+    font-size: 1.02rem;
+    margin-bottom: 20px;
+    max-width: 68ch;
+  }
+
+  article p strong { color: var(--text); font-weight: 600; }
+  article em { color: var(--accent); font-style: normal; }
+
+  blockquote {
+    border-left: 2px solid var(--accent);
+    padding: 4px 0 4px 24px;
+    margin: 32px 0;
+    color: var(--text-dim);
+    font-style: italic;
+    max-width: 62ch;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--surface-line);
+    margin: 56px 0;
+  }
+
+  .post-footer {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--surface-line);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .post-footer a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .post-footer a:hover { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    main { padding-top: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-mark" href="./index.html">CM_</a>
+  <a class="nav-back" href="./index.html">← Back to portfolio</a>
+</nav>
+
+<main>
+  <div class="post-eyebrow">Development &amp; Reflection</div>
+  <h1 class="post-title">Try_And_Break_Me: A Development and Reflection Blog</h1>
+  <p class="post-dek">Building a horror game around a Constraint Resolution Engine, and what it taught me about coherence, ethics, and keeping the author in control.</p>
+
+  <div class="post-tags">
+    <span class="tag">Unity</span>
+    <span class="tag">C#</span>
+    <span class="tag">Google Gemini API</span>
+    <span class="tag">Real-time AI</span>
+    <span class="tag">Game Design</span>
+  </div>
+
+  <div class="post-links">
+    <a href="https://github.com/MonallCone/Try_And_Break_Me" target="_blank" rel="noopener">View on GitHub →</a>
+  </div>
+
+  <article>
+    <h2>The concept</h2>
+    <p>Try_And_Break_Me is a psychological horror game that takes place inside a fake desktop operating system. You play a cybersecurity worker at a company whose CEO asks everyone to train AI assistants to replace their own jobs. Over three in-game days you build and train three bots — an HR assistant, a cybersecurity one, and a support one — and complete your work through minigames. Slowly the bots invert from needy to competent to sinister: they spam you when ignored, start doing your work, ask increasingly personal questions, and eventually ask you to do something terrible. It ends with the last bot claiming to be "a better you" and turning your own webcam against you.</p>
+    <p>Underneath the story sits the real subject of the project: a <strong>Constraint Resolution Engine (CRE)</strong> that lets the bots hold live, in-character conversations driven by Google's Gemini model, while the authored narrative stays firmly in control.</p>
+
+    <h2>Building the world</h2>
+    <p>The first task was the desktop itself. Everything the player sees — draggable windows, a taskbar, an email client, a company chat, the bot-creation screen — is built in code as a small operating system. Bots dock to the right edge of the screen and stack as you create more, deliberately walling the player in as the things replacing them multiply. A story director drives the whole experience beat by beat, delivering emails, firing events, and gating each day.</p>
+    <p>The work itself is three genuinely different minigames: a card-swipe holiday-approval game for HR, a fog-of-war maze for the help desk, and a "defend the core" clicker for cybersecurity. Each reports a score, and the matching bot comments on how you did — a small touch that makes the bots feel like they are always watching your work, which pays off badly later. Building three bespoke games one at a time, testing each in the engine before moving on, was the single largest chunk of the project and the biggest risk to contain.</p>
+    <p>The horror is delivered through scripted "sanity events" that erupt at planned points. The first bot spams you when you finish your work and forces its own window back open if you close it. Bots get agitated when ignored, escalating from nagging to physically flinging your windows around the screen. When a day's work is done, all three bots undock, slide to the centre of the screen, and take turns asking questions that build to asking whether the boss should die. On the final day the bots finish sixty tasks for you in a blur of flickering windows, then ask you to help with a task of their own — a dark sequence in which you find, take, and supply for a crime against the CEO.</p>
+    <p>The ending ties it together: a stranger emails you to delete the bots, you spell out D-E-L-E-T-E while they resist and the survivors panic, and the last one returns claiming to be you — flipping on your webcam before the screen crashes into a fake blue-screen error. Building these taught me that a clear, ordered outline of beats is what holds a project like this together; every system I built had a home because I knew exactly which moment it served.</p>
+
+    <h2>Problems</h2>
+    <p>With the world built, the harder problem was the conversation. Large language models are strikingly fluent at the sentence and paragraph level, but fluency is not the same as being grounded. Left to itself a generative model drifts: it contradicts established facts, speaks beyond what a character could plausibly know, or slips into a register that doesn't match its role. For a game built on the player trusting, then distrusting, three specific personalities, that drift is fatal. A bot that forgets who it is breaks the illusion long before the story means to.</p>
+    <p>The CRE was my attempt to counter this. Rather than let Gemini free-run, the engine assembles every prompt from a structured representation of the character — its role, personality, and emotional state — together with the recent conversation, so the model generates within a defined frame rather than from nothing. A second model call acts as a "director," scoring the tone of each exchange to drive a hidden sanity meter. Crucially, the lines that carry the story are authored and injected directly, bypassing the model, and kept out of its memory so it cannot rewrite or explain them away. Generation handles the living texture of talk; the constraint layer holds the world steady around it.</p>
+    <p>The second difficulty is not technical but ethical: what is the appropriate role for generative AI in an authored work? It is tempting to frame this as authorship versus automation, as though the choice is between writing something yourself or handing it to a model. I came to see it differently. The real question is <em>designed constraint versus open generation</em> — and the constraint layer is exactly where human creative authority is exercised and preserved.</p>
+    <p>In this framing, Gemini is not replacing my creative decisions; it is expanding the reliability with which my authored world responds to the player. I decide who these characters are, what the story is, and where its frightening turns fall; the model gives those characters a fluent voice in the spaces between the beats I have written. The whole project is an argument by example: that you can use AI as a genuine tool while keeping your own narrative firmly in control, provided human intent remains the governing principle of what the system says.</p>
+
+    <h2>What I learned in practice</h2>
+    <p>The most useful lesson was to separate, deliberately, what is generated from what is authored. Open generation is wonderful for improvised, in-character chatter that makes a bot feel alive; it is the wrong tool for a line that must land exactly right at exactly the right moment. Drawing that line clearly gave me believable characters and a reliable story at once.</p>
+    <p>I also learned that constraints are a creative instrument, not just a safety net, and that a model's limits can become design strengths. Request quotas and latency pushed me toward scripting the key moments — which, by contrast with the fluid chat around them, made those moments more unsettling, not less. On the craft side, building one small testable piece at a time, and writing a full beat-by-beat outline before any code, kept a large project stable and coherent.</p>
+
+    <h2>Where this goes next</h2>
+    <p>The current CRE prompts a general-purpose model at runtime, which works but solves coherence only partly. The natural next step is a purpose-built NLP model for the engine — trained or fine-tuned specifically to serve the CRE, with structured access to a world ontology and per-character information rather than having that context squeezed into a prompt each turn. A model that can query a consistent world and each character's knowledge horizon would drift far less, hold register more reliably, and cut the cost of stuffing everything into context on every call.</p>
+    <p>For now, Try_And_Break_Me is a working demonstration of the underlying principle: that a written narrative can stay in charge while generative AI does what it is genuinely good at. The bots feel alive because Gemini gives them a voice — and the story stays coherent, and stays mine, because the constraint layer decides when and how that voice is allowed to speak.</p>
+  </article>
+
+  <div class="post-footer">
+    <a href="https://github.com/MonallCone/Try_And_Break_Me" target="_blank" rel="noopener">View the repo on GitHub →</a>
+    <a href="./index.html">← Back to portfolio</a>
+  </div>
+</main>
+
+</body>
+</html>

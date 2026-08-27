@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Building Bag of Homebrew: Where We Are and Where We're Going — Conall Mone</title>
+<meta name="description" content="A single place to keep every item, character, and campaign — where Bag of Homebrew stands today, and where it's heading." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161f;
+    --bg-alt: #0f1017;
+    --surface: #1c1f2b;
+    --surface-line: #2b2f40;
+    --text: #ecece4;
+    --text-dim: #9497a8;
+    --accent: #e8a33d;
+    --accent-dim: #7a5c2a;
+    --teal: #4fb6a8;
+    --grid-line: rgba(236, 236, 228, 0.06);
+    --radius: 4px;
+    --display: 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.7;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  a { color: inherit; }
+  ::selection { background: var(--accent); color: var(--bg-alt); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px clamp(20px, 6vw, 64px);
+    background: rgba(20, 22, 31, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--surface-line);
+  }
+  .nav-mark { font-family: var(--mono); font-size: 14px; color: var(--accent); letter-spacing: 0.05em; text-decoration: none; }
+  .nav-back {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); }
+
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px clamp(20px, 6vw, 64px) 120px;
+  }
+
+  .post-eyebrow {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .post-eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--teal); }
+
+  h1.post-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.12;
+    margin-bottom: 18px;
+  }
+
+  p.post-dek {
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    max-width: 62ch;
+    margin-bottom: 30px;
+  }
+
+  .post-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 48px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    border: 1px solid var(--surface-line);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+
+  .post-links { display: flex; flex-wrap: wrap; gap: 22px; margin-bottom: 56px; padding-bottom: 40px; border-bottom: 1px solid var(--surface-line); }
+  .post-links a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--surface-line);
+    padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .post-links a:hover { color: var(--accent); border-color: var(--accent); }
+
+  article h2 {
+    font-family: var(--display);
+    font-size: clamp(1.4rem, 3vw, 1.7rem);
+    font-weight: 600;
+    margin: 52px 0 18px;
+    padding-top: 4px;
+  }
+  article h2:first-of-type { margin-top: 0; }
+
+  article p {
+    color: #d6d6cc;
+    font-size: 1.02rem;
+    margin-bottom: 20px;
+    max-width: 68ch;
+  }
+
+  article p strong { color: var(--text); font-weight: 600; }
+  article em { color: var(--accent); font-style: normal; }
+
+  .post-footer {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--surface-line);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .post-footer a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .post-footer a:hover { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    main { padding-top: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-mark" href="./index.html">CM_</a>
+  <a class="nav-back" href="./index.html">← Back to portfolio</a>
+</nav>
+
+<main>
+  <div class="post-eyebrow">Project Update</div>
+  <h1 class="post-title">Building Bag of Homebrew: Where We Are and Where We're Going</h1>
+  <p class="post-dek">Every tabletop player knows the feeling — your loot lives in five places and none of them talk to each other. Here's where the project stands, and where it's heading.</p>
+
+  <div class="post-tags">
+    <span class="tag">C# / ASP.NET Core</span>
+    <span class="tag">React + TypeScript</span>
+    <span class="tag">PostgreSQL</span>
+    <span class="tag">Docker</span>
+  </div>
+
+  <div class="post-links">
+    <a href="https://bagofhomebrew-production.up.railway.app/" target="_blank" rel="noopener">View live site →</a>
+    <a href="https://github.com/MonallCone/Bag_of_Homebrew" target="_blank" rel="noopener">View on GitHub →</a>
+  </div>
+
+  <article>
+    <p>Every tabletop player knows the feeling. You're three sessions deep into a campaign, someone asks what's in your bag, and you're frantically scrolling through a note-taking app, a half-finished spreadsheet, and a photo of a character sheet you took weeks ago. Your loot lives in five places and none of them talk to each other.</p>
+    <p>Bag of Homebrew started as an answer to that mess — a single place to keep every item, every character, and every campaign. Here's where the project stands, and where it's heading.</p>
+
+    <h2>What it does today</h2>
+    <p>At its core, Bag of Homebrew is an inventory and campaign manager for tabletop role-playing games. It's built D&amp;D-first, because that's the world most of us start in — but underneath, it's designed to be system-agnostic, so it doesn't force your game to work the way one particular rulebook says it should.</p>
+    <p>Right now, you can build out a full inventory of items — each with its own rarity, category, artwork, and homebrew description. A cursed dagger that whispers to its wielder and a plain set of traveller's boots both get a home, and the rarer something is, the more it looks the part. Items live in a proper stat-block layout that should feel familiar to anyone who's read a magic item entry.</p>
+    <p>Characters get sheets that actually keep up with play. Equipment slots handle what you're wearing and wielding, including the fiddly cases like two-handed and versatile weapons. Health, armour, and currency are all tracked and adjustable on the fly, so you're not doing mental arithmetic every time you take a hit or split the party's gold.</p>
+    <p>The part I'm proudest of is campaign mode. A game master can host a campaign, invite their party with a simple code, and share a common vault of loot. The GM can see everyone's character at a glance and hand out treasure as the story unfolds. Players can trade items with each other directly — and every hand-off waits for the other person to accept, so nothing vanishes into thin air and no one argues about who got the enchanted sword.</p>
+    <p>Getting all of this from an idea to a working, deployed application has been the bulk of the journey so far. It's a full-stack build: a C# and ASP.NET Core backend with a PostgreSQL database, a React and TypeScript frontend, Google sign-in, image and file uploads, and the whole thing containerised and running in the cloud. There's a real satisfaction in taking something from an empty folder to a live site that anyone can open.</p>
+
+    <h2>The thinking underneath</h2>
+    <p>One decision has shaped almost everything: keep the engine generic, and put the D&amp;D flavour on top.</p>
+    <p>It would have been easier to hardcode six ability scores and a fixed list of item types and call it a day. But tabletop gaming is enormous, and every system does things differently. So instead, the plan is for the underlying structures to be flexible — configurable fields, freeform properties, systems defined by templates rather than baked into the code — while shipping sensible D&amp;D defaults so the common case just works out of the box. You get convenience if you play the popular systems, and flexibility if you don't.</p>
+    <p>That philosophy is why the roadmap ahead feels coherent rather than like a pile of unrelated features. A lot of what's coming turns out to be the same few ideas wearing different hats.</p>
+
+    <h2>What's coming next</h2>
+    <p>The next big area is magic and abilities. Spellbooks and class or race features might look like two separate systems, but underneath they're the same thing: abilities that optionally draw from a resource. A wizard's spell slots, a monk's ki points, a bard's inspiration — they're all just named pools that abilities spend from. Building that one engine well means spells and features both fall out of it naturally, presented in the way each one wants to be seen.</p>
+    <p>Alongside that, I want to bring in proper stats and ability scores — the actual numbers behind a character — in a way that stays flexible across systems, with familiar D&amp;D presets so you're not typing in eighteen skill values by hand. Rest mechanics to refill your resources, a dice roller, and a simple notes-and-quests page to track what your party is actually trying to do are all on the list too.</p>
+    <p>Further out, the ambition is a content library: templates for common items and spells so you're not rebuilding a longsword from scratch every time, plus the ability to import and export your data so it's truly yours. And for game masters, live campaign updates so loot and trades appear in real time, without anyone hitting refresh.</p>
+
+    <h2>An honest note on where it is</h2>
+    <p>Bag of Homebrew is early. It's live, it works, and the core loop of items, characters, and campaigns is solid — but it's the foundation of something bigger, not the finished article. I'm building it in the open, adding the features that will make it genuinely indispensable, and I'd rather ship something real and grow it than promise the world and deliver a mock-up.</p>
+    <p>If you run games or play in them, and you've ever lost track of your loot, this is being built for you. There's a lot more to come — and the best part is that the hardest bit, turning an idea into a real, running application, is already done.</p>
+    <p>Thanks for reading. See you at the table.</p>
+  </article>
+
+  <div class="post-footer">
+    <a href="https://bagofhomebrew-production.up.railway.app/" target="_blank" rel="noopener">Try the live site →</a>
+    <a href="./index.html">← Back to portfolio</a>
+  </div>
+</main>
+
+</body>
+</html>
