@@ -240,6 +240,14 @@
   }
   .project-links a:hover { color: var(--accent); border-color: var(--accent); }
   .project-links a.disabled { color: var(--text-dim); opacity: 0.55; pointer-events: none; }
+  .project-links span.disabled {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    opacity: 0.55;
+    border-bottom: 1px dashed var(--surface-line);
+    padding-bottom: 2px;
+  }
 
   @media (max-width: 640px) {
     .project-card { grid-template-columns: 1fr; }
@@ -340,7 +348,7 @@
     <article class="project-card" data-index="1">
       <span class="project-index">01</span>
       <div>
-        <h3 class="project-title">Unity Game with Gemini AI Dialogue System</h3>
+        <h3 class="project-title">Try and Break Me</h3>
         <div class="project-tags">
           <span class="tag">Unity</span>
           <span class="tag">C#</span>
@@ -355,8 +363,8 @@
           around the unpredictability of generative output.
         </p>
         <div class="project-links">
-          <a href="#" class="disabled" aria-disabled="true">Read the deep dive →</a>
-          <a href="#" class="disabled" aria-disabled="true">View on GitHub →</a>
+          <span class="disabled" aria-disabled="true">Write-up coming soon</span>
+          <a href="https://github.com/MonallCone/Try_And_Break_Me" target="_blank" rel="noopener">View on GitHub →</a>
         </div>
       </div>
     </article>
@@ -378,8 +386,8 @@
           containerised with Docker and deployed with automated database migrations.
         </p>
         <div class="project-links">
-          <a href="#" class="disabled" aria-disabled="true">Read the deep dive →</a>
-          <a href="#" class="disabled" aria-disabled="true">View on GitHub →</a>
+          <a href="https://bagofhomebrew-production.up.railway.app/" target="_blank" rel="noopener">View live site →</a>
+          <a href="https://github.com/MonallCone/Bag_of_Homebrew" target="_blank" rel="noopener">View on GitHub →</a>
         </div>
       </div>
     </article>
@@ -401,8 +409,8 @@
           behind pathfinding and procedural generation in games.
         </p>
         <div class="project-links">
-          <a href="#" class="disabled" aria-disabled="true">Read the deep dive →</a>
-          <a href="#" class="disabled" aria-disabled="true">View on GitHub →</a>
+          <a href="./logic-puzzle-solver-dissertation.pdf" target="_blank" rel="noopener">Read the dissertation (PDF) →</a>
+          <a href="https://github.com/MonallCone/Generating_and_Solving_Logic_Problems" target="_blank" rel="noopener">View on GitHub →</a>
         </div>
       </div>
     </article>
@@ -461,7 +469,7 @@
   <div class="footer-links">
     <a href="mailto:conallmone1@gmail.com">conallmone1@gmail.com</a>
     <a href="https://www.linkedin.com/in/conall-mone-66ab5222a" target="_blank" rel="noopener">LinkedIn</a>
-    <a href="#" class="disabled" aria-disabled="true">GitHub</a>
+    <a href="https://github.com/MonallCone" target="_blank" rel="noopener">GitHub</a>
   </div>
   <div class="footer-bottom">
     <span>Conall Mone — Belfast, NI</span>
