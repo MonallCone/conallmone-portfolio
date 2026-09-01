@@ -205,6 +205,67 @@
   @media (max-width: 640px) {
     main { padding-top: 48px; }
   }
+
+  .post-switcher {
+    position: fixed;
+    top: 50%;
+    left: clamp(10px, 2.5vw, 28px);
+    transform: translateY(-50%);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .post-switcher a {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: 50%;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .post-switcher a:hover { color: var(--accent); border-color: var(--accent); }
+  .post-switcher a.active {
+    color: var(--bg-alt);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .post-switcher a .switcher-tip {
+    position: absolute;
+    left: 52px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    padding: 5px 10px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .post-switcher a:hover .switcher-tip { opacity: 1; }
+
+  @media (max-width: 640px) {
+    .post-switcher {
+      top: auto;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(50%);
+      flex-direction: row;
+    }
+    .post-switcher a .switcher-tip { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -213,6 +274,11 @@
   <a class="nav-mark" href="../index.html">CM_</a>
   <a class="nav-back" href="../index.html">← Back to portfolio</a>
 </nav>
+
+<div class="post-switcher" aria-label="Switch between blog posts">
+  <a href="./blog-try-and-break-me.html" class="active" aria-current="page">1<span class="switcher-tip">Try_And_Break_Me: Dev &amp; Reflection</span></a>
+  <a href="./blog-industry-research.html">2<span class="switcher-tip">Researching the Game AI Industry</span></a>
+</div>
 
 <main>
   <div class="post-eyebrow">Development &amp; Reflection</div>
