@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A Constraint-Driven NLP Framework for NPC Dialogue — Conall Mone</title>
+<meta name="description" content="Turning an MA research proposal into practice: why dialogue trees and raw generative AI both fall short for NPC dialogue, and what a constraint-programming layer between them buys you." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161f;
+    --bg-alt: #0f1017;
+    --surface: #1c1f2b;
+    --surface-line: #2b2f40;
+    --text: #ecece4;
+    --text-dim: #9497a8;
+    --accent: #e8a33d;
+    --accent-dim: #7a5c2a;
+    --teal: #4fb6a8;
+    --grid-line: rgba(236, 236, 228, 0.06);
+    --radius: 4px;
+    --display: 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.7;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  a { color: inherit; }
+  ::selection { background: var(--accent); color: var(--bg-alt); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px clamp(20px, 6vw, 64px);
+    background: rgba(20, 22, 31, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--surface-line);
+  }
+  .nav-mark { font-family: var(--mono); font-size: 14px; color: var(--accent); letter-spacing: 0.05em; text-decoration: none; }
+  .nav-back {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); }
+
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px clamp(20px, 6vw, 64px) 120px;
+  }
+
+  .post-eyebrow {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .post-eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--teal); }
+
+  h1.post-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.12;
+    margin-bottom: 18px;
+  }
+
+  p.post-dek {
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    max-width: 62ch;
+    margin-bottom: 30px;
+  }
+
+  .post-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 48px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    border: 1px solid var(--surface-line);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+
+  article h2 {
+    font-family: var(--display);
+    font-size: clamp(1.4rem, 3vw, 1.7rem);
+    font-weight: 600;
+    margin: 48px 0 16px;
+    padding-top: 4px;
+  }
+  article h2:first-of-type { margin-top: 0; }
+
+  article p {
+    color: #d6d6cc;
+    font-size: 1.02rem;
+    margin-bottom: 20px;
+    max-width: 68ch;
+  }
+
+  article p strong { color: var(--text); font-weight: 600; }
+  article em { color: var(--accent); font-style: normal; }
+
+  article ul { margin: 0 0 22px; padding-left: 22px; max-width: 68ch; }
+  article li { color: #d6d6cc; font-size: 1.02rem; margin-bottom: 9px; }
+  article li strong { color: var(--text); font-weight: 600; }
+
+  .post-footer {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--surface-line);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .post-footer a {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .post-footer a:hover { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    main { padding-top: 48px; }
+  }
+
+  .post-switcher {
+    position: fixed;
+    top: 50%;
+    left: clamp(10px, 2.5vw, 28px);
+    transform: translateY(-50%);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .post-switcher a {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    border-radius: 50%;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .post-switcher a:hover { color: var(--accent); border-color: var(--accent); }
+  .post-switcher a.active {
+    color: var(--bg-alt);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .post-switcher a .switcher-tip {
+    position: absolute;
+    left: 52px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--surface-line);
+    padding: 5px 10px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .post-switcher a:hover .switcher-tip { opacity: 1; }
+
+  @media (max-width: 640px) {
+    .post-switcher {
+      top: auto;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(50%);
+      flex-direction: row;
+    }
+    .post-switcher a .switcher-tip { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-mark" href="../index.html">CM_</a>
+  <a class="nav-back" href="../index.html">← Back to portfolio</a>
+</nav>
+
+<div class="post-switcher" aria-label="Switch between blog posts">
+  <a href="./blog-try-and-break-me.html">1<span class="switcher-tip">Try_And_Break_Me: Dev &amp; Reflection</span></a>
+  <a href="./blog-industry-research.html">2<span class="switcher-tip">Researching the Game AI Industry</span></a>
+  <a href="./blog-constraint-driven-nlp-framework.html" class="active" aria-current="page">3<span class="switcher-tip">Constraint-Driven NLP Framework</span></a>
+</div>
+
+<main>
+  <div class="post-eyebrow">Academic Research</div>
+  <h1 class="post-title">A Constraint-Driven NLP Framework for Dynamic NPC Dialogue</h1>
+  <p class="post-dek">The MA research proposal behind the Constraint Resolution Engine — why neither dialogue trees nor raw generative AI are enough on their own, and what sits between them instead.</p>
+
+  <div class="post-tags">
+    <span class="tag">MA Research Proposal</span>
+    <span class="tag">NLP</span>
+    <span class="tag">Constraint Programming</span>
+    <span class="tag">Game AI</span>
+    <span class="tag">Ethics</span>
+  </div>
+
+  <article>
+    <h2>Introduction</h2>
+    <p>NPC dialogue is one of the most persistent design problems in modern game development. Open-world RPGs now feature hundreds of interactable characters, and that puts two demands in direct tension. Narrative coherence has traditionally come from dialogue trees — exhaustive manual authorship. Scalability is what generative AI promises instead, but so far it hasn't delivered that without a real loss of consistency and immersion.</p>
+    <p>My proposal argued for a <strong>Constraint-Driven NLP Framework</strong>: a system architecture that mediates between a structured game-world knowledge base and a generative language model, through a constraint-programming layer sitting between them. Neither the authored approach nor the generative approach is sufficient alone — the field needs a hybrid grounded in world ontology. That lineage runs from parser-based interactive fiction like <em>Zork</em>, through procedural drama systems like <em>Façade</em> and <em>Versu</em>, up to the world-modelling demands of modern RPGs like <em>Mass Effect</em> and <em>Dragon Age: Origins</em>.</p>
+
+    <h2>The dialogue tree model and its limitations</h2>
+    <p>The dominant model for NPC dialogue in commercial development has long been the branching dialogue tree — a finite-state system where every response is manually authored and mapped to a defined set of player choices. Even the most sophisticated tree-based systems stay fundamentally static: the space of possible interaction is bounded entirely by what an author anticipated and scripted in advance. In large open-world games that becomes economically prohibitive — scripting unique, contextually appropriate dialogue for hundreds of NPCs across dynamic world states and evolving player relationships is a primary constraint on how expressive a game's RPG design can actually be.</p>
+    <p>Fixed-response systems also limit player agency and fail to model the generative reciprocity of real linguistic interaction. Accessibility research on text-parser interaction shows the same problem from another angle: the constraint of predefined response sets creates real barriers, since players have to conform their language to a rigid grammar instead of engaging with a system that models genuine communicative flexibility. Together, these establish that the dialogue tree model, while reliable, is a structural ceiling — exactly the ceiling generative approaches are positioned to lift.</p>
+
+    <h2>Generative NLP and the problem of coherence</h2>
+    <p>Large language models have made generative NPC dialogue newly plausible. Transformer-based models show remarkable fluency and contextual sensitivity at the sentence and paragraph level. But the trajectory of natural language generation research is clear on one point: while surface-level fluency has improved dramatically, <em>grounding</em> — a system's ability to anchor its output in a consistent model of the world — remains unsolved.</p>
+    <p>Commercial deployment bears this out. Without access to a structured representation of the game world, generative models produce dialogue that's linguistically fluent but factually inconsistent — contradicting established lore, speaking beyond a character's knowledge horizon, or slipping into a register inconsistent with their social role. Alquist 5.0 is a useful data point here: a hybrid approach where generative models are augmented with structured dialogue trees produces more coherent, contextually appropriate conversation than either approach alone, which operationalises the idea that constraint structures and generative models are complementary rather than competing. There's also a resource concern that shaped the framework directly: the computational cost of large NLP models is a real problem for consumer hardware running a game engine in real time, which is why the framework leans on parameter-efficient generation and lightweight constraint resolution rather than a large hosted model.</p>
+
+    <h2>Constraint programming as a mediating architecture</h2>
+    <p>Constraint programming gives a structured way to restrict the solution space of a generative system — problems are expressed as sets of variables subject to constraints, and solutions are sought within the feasible region those constraints define. It's particularly well suited to domains where outputs have to satisfy complex, interacting requirements, which is exactly the condition NPC dialogue generation faces when it has to simultaneously satisfy narrative, social, spatial, and relational constraints at once.</p>
+    <p>There's also precedent for the constraint layer itself becoming partially learnable rather than requiring entirely manual specification — machine learning applied to constraint acquisition can derive learned constraint models from structured data, and structured query mechanisms over world-knowledge databases can support the dynamic, context-driven retrieval that real-time interaction demands.</p>
+
+    <h2>History of interactive fiction and procedural drama</h2>
+    <p>This framework doesn't come from nowhere. <em>Zork</em> established the parser-based adventure game as the originating model: natural language input drives narrative state, but interpretation is constrained by a finite syntactic grammar. The expressive ambitions of interactive fiction have consistently outpaced the technical means available to realise them — a gap contemporary NLP may finally be positioned to close.</p>
+    <p><em>Façade</em> is the most significant theoretical precedent: it introduced a drama-management architecture balancing open-ended player interaction with authored narrative structure, establishing that generative interaction needs a mediating layer to keep dramatic progression coherent. <em>Versu</em> extended this by implementing a formal simulation of social norms, character knowledge, and relational dynamics as explicit logical structures constraining character behaviour. My framework inherits that principle directly and moves it from dramatic simulation into world-grounded dialogue generation — where <em>Versu</em> modelled social norms as logical rules, this framework models world knowledge as a structured database; where <em>Façade</em> employed a drama manager, this system employs a constraint-resolution engine.</p>
+
+    <h2>Framework architecture</h2>
+    <p>The framework operates across three integrated layers:</p>
+    <ul>
+      <li><strong>World Knowledge Base (WKB)</strong> — a relational database encoding the game world's ontology: NPC identities, social roles, spatial locations, faction memberships, quest states, and player-NPC relational histories. Comparable structures already exist in part in shipped RPGs — <em>Mass Effect</em>'s Codex and <em>Dragon Age: Origins</em>' Archives are manually written subsets of similar world knowledge.</li>
+      <li><strong>Constraint Resolution Engine (CRE)</strong> — a rule-based system that, given a dialogue context, the active NPC, the player's location, and the current quest and relationship state, filters the WKB down to a constrained knowledge context: the subset of world information accessible to and appropriate for that NPC.</li>
+      <li><strong>NLP Generation Layer</strong> — receives that constrained context as a structured prompt and generates dialogue using a locally hosted, instruction-tuned language model, provisionally a parameter-efficient variant, consistent with the resource-efficiency demands identified above.</li>
+    </ul>
+
+    <h2>Constraint hierarchy</h2>
+    <p>The CRE resolves through five constraint types:</p>
+    <ul>
+      <li><strong>Identity constraints</strong> — NPC name, species, profession and backstory.</li>
+      <li><strong>Social role constraints</strong> — position within the game world's social hierarchy, determining register and the topics an NPC would plausibly raise.</li>
+      <li><strong>Spatial constraints</strong> — limiting NPC knowledge to events and locations within their plausible reach, preventing immersion-breaking dialogue.</li>
+      <li><strong>Relational constraints</strong> — encoding player-NPC interaction history, so dialogue can reflect prior encounters, completed quests, or relationship changes.</li>
+      <li><strong>Knowledge boundary constraints</strong> — an explicit representation of what an NPC knows, believes (which may differ from fact), and is ignorant of.</li>
+    </ul>
+    <p>Critically, constraints are defined at the <em>role</em> level — a developer specifies a constraint profile for a role type like "village merchant" or "royal guard," and individual NPCs inherit and instantiate it. That's what makes the system scale without per-character scripting.</p>
+
+    <h2>Prototype and evaluation</h2>
+    <p>The proposal called for implementing and evaluating the framework in a custom Unity environment with at least 20 NPCs spanning 5 role types in a compact open-world setting. The WKB would be a relational SQL database, the CRE a Python service, and the NLP layer integrated via a lightweight REST API for real-time responses. Evaluation was planned across three dimensions: <strong>coherence</strong>, through automated consistency checking that parses generated dialogue against the WKB to detect factual violations; <strong>scalability</strong>, by measuring coherence and fluency as a function of NPC population size relative to a hand-authored baseline; and <strong>player immersion</strong>, through a controlled user study using the Game Experience Questionnaire plus post-play interviews, with a minimum of thirty participants.</p>
+
+    <h2>Ethics</h2>
+    <p>Two ethical issues sit at the centre of this: the environmental impact of generative AI, and what AI-generated content means for authorship, creative control, and artistic agency in game development.</p>
+    <p>On environmental impact — training large language models carries a well-documented carbon footprint; one estimate put a single large NLP model's training emissions on par with five cars over their lifetimes. The framework addresses this directly through its commitment to parameter-efficient, locally hosted models, and through the constraint architecture itself, which narrows the input context before generation runs and so reduces the computational load — and therefore the energy cost — per dialogue turn compared to unconstrained generation. The prototype was designed to log inference energy usage specifically to benchmark that efficiency claim, treating environmental responsibility as a first-class design criterion rather than an afterthought.</p>
+    <p>On authorship — the integration of AI into creative industries raises real questions about replacing human creative labour and the source of AI-generated content. My framework takes a clear position: rather than deploying generative AI as a creative agent, it's designed to amplify developer intent. The constraint architecture — the role-based knowledge boundaries, social registers, and world-ontological limits a developer defines — means every aspect of the dialogue space an NPC can inhabit is authored, even if the specific surface-level line within that space is generated. It's still grounded in a manually authored world, so developers keep narrative control. The framework reframes the ethics of AI in games not as authorship versus automation, but as <em>designed constraint versus open generation</em>, with the constraint layer as the site where human creative authority is exercised and preserved.</p>
+
+    <h2>Value of research</h2>
+    <p>The contribution sits at three levels. Technically, the framework fills a well-defined gap — the absence of a structured, scalable architecture for grounded generative dialogue — and the role-based scalability model in particular is a genuine advance: defining constraints once per role rather than scripting per character. Theoretically, it argues for conceptual continuity across the history of language-driven game interaction, placing the framework in the lineage running from <em>Zork</em> through <em>Façade</em> and <em>Versu</em> to today's generative systems, and proposing structural grounding as the persistent design principle connecting parser-based, procedural, and generative approaches — with implications for broader HCI debates about constraint and creativity. Industrially, it gives developers a practical, implementable methodology for scaling NPC dialogue without sacrificing narrative coherence, in an industry where dialogue quality is already a major driver of RPG engagement and retention.</p>
+
+    <h2>Conclusion</h2>
+    <p>Existing approaches — whether fully authored or fully generative — are structurally inadequate to large-scale, immersive game environments. Constraint programming offers a theoretically sound way to restrict generative output within authored world structures, and the proposed framework sits in a productive relationship with the history of language-based interaction in games, from <em>Zork</em> through <em>Façade</em> to <em>Versu</em>. The iterative, mixed-method research design fits a problem that's simultaneously technical and experiential, and in both the environmental and authorship dimensions of the ethics case, the constraint architecture is the mechanism through which those commitments actually get operationalised — limiting compute overhead and preserving developer creative authority at the same time.</p>
+
+    <h2>How this shows up in Try_And_Break_Me</h2>
+    <p>This proposal is the research case for the architecture I later built and shipped in <em>Try_And_Break_Me</em>. The CRE there does exactly the job described above: every prompt sent to Gemini is assembled from a structured picture of the character — role, personality, emotional state — plus recent context, so generation happens inside a frame rather than freely. A second "director" call scores each exchange to drive a hidden sanity meter, and the load-bearing horror lines are authored and injected directly, kept out of the model's memory so it can't explain them away or drift off them. The quota pressure of a metered, free-tier API forced the same trade-off the proposal anticipates around resource-constrained generation — script the moments that have to land exactly, and reserve the model for the open, in-character chatter around them. The theory held up: the story stays coherent, and stays mine, because the constraint layer decides when the generative voice is allowed to speak.</p>
+  </article>
+
+  <div class="post-footer">
+    <a href="./index.html">← Back to portfolio</a>
+    <a href="#top">Back to top ↑</a>
+  </div>
+</main>
+
+</body>
+</html>
