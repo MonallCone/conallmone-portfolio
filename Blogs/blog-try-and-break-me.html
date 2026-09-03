@@ -187,6 +187,16 @@
     flex: 1 1 260px;
     margin: 0;
   }
+  .img-placeholder-row img {
+    width: calc(50% - 8px);
+    margin: 0;
+  }
+  /* Exactly 3 images: first two sit side by side, the third wraps onto its
+     own line and centres beneath them — an upside-down triangle. */
+  .img-placeholder-row img:nth-child(3):last-child {
+    margin-left: auto;
+    margin-right: auto;
+  }
 
   .bot-card { margin: 28px 0; }
   .bot-card h3 {
@@ -410,6 +420,13 @@
 
     <h2>Act 2 &mdash; from incompetent to helpful</h2>
     <p>Act 2's job was to develop deeper sanity events and to add bot "help" into each task, showing a clear arc from incompetent to helpful to sinister. That help went through a few iterations. In the maze a blue guide path shows the best route which I'd already calculated for the scoring on each task &mdash; no real intelligence, just an answer key. In the cyber-defence game, help began as random blobs exploding on their own; I changed it so Stuart's own icon moves around the screen and attacks the threats himself. In the HR swipe game, Lauren now flags what she thinks should be approved or declined.</p>
+    
+    <div class="img-placeholder-row">
+      <img src="../Images/Try_And_Break_Me/maze_help.png" />
+      <img src="../Images/Try_And_Break_Me/hr_help.png" />
+      <img src="../Images/Try_And_Break_Me/cyber_help.png" />
+    </div>
+
     <p>Timing was the harder problem &mdash; when should help actually switch on? I landed on tying it to bot creation: the moment a given bot exists, its helper is added to the matching task automatically.</p>
     <p>Act 2's other sanity events came from the same "force the player's hand" instinct as the first one. At four of the day's eight tasks, the rest lock behind a fake "Blocked by Administrator" dialog and a CEO demand &mdash; tasks don't unlock again until you create the third bot. Ignore any bot instead of engaging with it, and it escalates on its own: nagging, then spamming messages, then flinging its window around the screen and dropping it directly in front of whatever task window you're trying to use. Once all eight tasks are done, all three bots undock at once, drift to the centre of the screen, and take turns asking whether the CEO should die.</p>
 
