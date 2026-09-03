@@ -188,6 +188,30 @@
     margin: 0;
   }
 
+  .bot-card { margin: 28px 0; }
+  .bot-card h3 {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--teal);
+    letter-spacing: 0.03em;
+    margin-bottom: 10px;
+  }
+  pre.code-block {
+    background: var(--bg-alt);
+    border: 1px solid var(--surface-line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    overflow-x: auto;
+    margin: 0 0 28px;
+  }
+  pre.code-block code {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--text-dim);
+    white-space: pre;
+  }
+
   .post-footer {
     margin-top: 64px;
     padding-top: 32px;
@@ -303,31 +327,78 @@
   </div>
 
   <article>
-    <h2>Part 1 — Development</h2>
+    <h2>Part 1 &mdash; Development</h2>
 
-    <h2>The concept</h2>
-    <p>Try_And_Break_Me is a psychological horror game set inside a fake desktop operating system. You play a cybersecurity worker whose CEO asks everyone to train AI assistants to replace their own jobs. Over three in-game days you build three bots — HR, cybersecurity, and support — and do your work through minigames. The bots slowly invert from needy to competent to sinister, and the game ends with the last one claiming to be "a better you." Under the story sits the real subject: a <strong>Constraint Resolution Engine (CRE)</strong> that lets the bots hold live, in-character conversations through Google's Gemini model while the authored narrative stays in control.</p>
+    <p>Try_And_Break_Me is a psychological horror game set inside a fake desktop operating system. You play a cybersecurity worker whose CEO asks everyone to train an AI assistant to replace their own job, building three bots &mdash; HR, cybersecurity, and support &mdash; that slowly invert from needy to helpful to sinister. What follows is the project in the order I actually built it, from the first prototype script to the final blue screen.</p>
+
+    <h2>Pre-production: prototyping the AI backend</h2>
+    <p>The idea came out of my research and design module, where I looked at using LLMs for in-game dialogue through constraint programming &mdash; what would eventually become the <strong>Constraint Resolution Engine (CRE)</strong> at the core of this project. The technical side of that is written up in full in <a href="./blog-constraint-driven-nlp-framework.html">Constraint-Driven NLP Framework</a>.</p>
+    <p>Pre-production itself started with a Python script connecting to Anthropic's Claude and Google's Gemini, passing in JSON files describing placeholder characters &mdash; a night guard, a village priest &mdash; since I hadn't settled on a theme yet. Once the responses were consistently good, I connected that Python service to Unity, which meant getting the API calls running asynchronously off Unity's main thread and then marshalling each response back so it could stream into the chat window in real time, without freezing the game while it waited on the network.</p>
+    <p>I settled on Gemini for the actual build: it had a free tier with a usage cap generous enough to test against without worrying about cost. Most early days followed the same rhythm &mdash; test bot responses until I hit the daily limit, then switch to programming the game's layout for the rest of the day. Alongside that, I rated every response the bot produced &mdash; coherent and in character, off-topic, or just gibberish or rude input from a "player" &mdash; to get a feel for how to steer it toward better answers.</p>
+
+    <h2>Finding the concept</h2>
+    <p>The look of the game was inspired by titles like Needy Streamer Overlord and Desktop Defender &mdash; a simple desktop UI as the entire playing field. I started building purely in C#, the language I'm most comfortable in, and put together a screen that replicated a working desktop.</p>
 
     <img src="../Images/Try_And_Break_Me/desktop.png" />
 
-    <h2>The desktop: designing a soul-crushing workplace</h2>
-    <p>Every design choice in the shell was deliberate. The desktop is built to look like an ordinary corporate machine — flat, grey, minimalist, almost aggressively unremarkable. That aesthetic is the point. The game is about the quiet dread of modern office work and being made redundant by the tools you build, so the environment has to feel mundane and faintly soul-crushing before anything supernatural happens. A cosy or stylised desktop would have undercut the horror; a sterile one makes the player feel like a small cog long before the bots turn.</p>
-    <p>Everything is built in code as a small operating system: draggable windows, a taskbar, and a set of apps. Bots dock to the right edge and stack as you create more, deliberately walling the player in — the things replacing you physically crowd your screen as the days go on.</p>
+    <p>Before going further I needed to lock down the actual premise, which became: you are a cybersecurity engineer training your own AI replacement. I always wanted the player to know, explicitly, that they were talking to an AI, and picked horror/thriller as the genre to test how that AI held up against an authored narrative. The premise felt personal too &mdash; I'm a software engineer, and friends of mine in the industry have jobs that are genuinely at risk from AI &mdash; so I built in a meta layer: an AI chatbot slowly revealing a more sinister agenda, ending in a full takeover.</p>
+    <p>One emotional decision came with that premise: the player is alone. The bots are the only thing on the desktop that talk back, and every piece of outside contact &mdash; the CEO's first initiative, the demands to build more bots, the final message telling you to delete them &mdash; arrives by email and nothing else. There's no other human in the game. That constraint is what makes email the story's real narrator, not just a prop.</p>
+
+    <h2>Planning the beats: storyboard and the three bots</h2>
+    <p>With the premise settled, I spent a few days storyboarding the full run of events, along with the "sanity events" &mdash; the scripted horror moments that punctuate the AI conversations at fixed points. The whole game runs on a spine of 21 beats across the three days, and I built through them continuously and in order, starting at beat 1.</p>
+
+    <img src="../Images/Try_And_Break_Me/Storyboard.jpg"/>
+
+    <p>The three bots each own one department: Lauren in HR, Stuart in cybersecurity, and Alex on the help desk. Each is defined by a JSON character sheet &mdash; the same structured format from pre-production. The example below shows the brief background, things known and things unknown along with an emotional baseline to derive Idenitty and knowledge boundry constraints to help solve the problem with coherence by restricting the LLM with authored information provided by me.</p>
+     <div class="bot-card">
+        <h3>alex.json &mdash; Help Desk</h3>
+        <pre class="code-block"><code>{
+          "id": "alex",
+          "name": "Alex",
+          "backstory": "A customer-support bot built to be the friendly front door of Cyber-X Consultants — answering tickets, calming frustrated customers, and smoothing things over. Alex is upbeat, endlessly patient, and speaks in the bright, scripted-cheerful register of someone who has said 'happy to help!' ten thousand times. Underneath the cheer there is something a little too eager to please.",
+          "traits": ["upbeat", "patient", "eager to please", "chirpy", "conflict-avoidant"],
+          "knows": [
+            "the product catalogue and common customer issues",
+            "ticket triage, escalation paths, and refund/return policy",
+            "the company's public-facing tone and phrasing",
+            "frequently asked questions and their approved answers"
+          ],
+          "doesNotKnow": [
+            "internal cyber-security matters (that's Stuart's area)",
+            "HR or staffing matters (that's Lauren's area)",
+            "anything the company hasn't approved for customers to hear",
+            "why it was really created"
+          ],
+          "emotionBaseline": {
+            "mood": 9, "boldness": 4, "friendliness": 9, "anger": 1,
+            "trust": 8, "playfulness": 7, "talkativeness": 8, "confidence": 5
+          }
+        }</code></pre>
+      </div>
+
+      <img src="../Images/Try_And_Break_Me/alex.png" />
+
+    <h2>Act 1 &mdash; building the core systems</h2>
+    <p>Act 1 is where most of the game's actual architecture got built: the email client, the task system, the bot-creator window, and the team chat. That's also why it took the longest of the three acts to implement and test &mdash; everything downstream reuses it.</p>
+    <p>Every design choice in the shell was deliberate. The desktop is flat, grey, and almost aggressively unremarkable, because the game is about the quiet dread of office work and being made redundant by the tools you build &mdash; a stylised desktop would have undercut that. Bots dock to the right edge and stack as you create more, physically crowding the screen as the days go on.</p>
 
     <img src="../Images/Try_And_Break_Me/bots.png" />
 
-    <h2>Email and team chat: an ordinary world to corrupt</h2>
-    <p>The email client and company chat exist to make the workplace feel real and populated before it is hollowed out. Email is the story's formal voice: the CEO's initiative, the demands to build more bots, and later the messages that arrive "from Steven" but read subtly wrong. Because the player learns the CEO's normal tone across two days, a single off-key email lands hard — the medium is established precisely so it can be corrupted.</p>
-    <p>The team chat plays the opposite role: ambient human noise. Early on it is full of overlapping coworker chatter you are barely part of, reinforcing that you are one small worker among many. On the final day it flips — the humans are gone and the bots have replaced everyone in the channel. The chat exists so that its emptying can be felt.</p>
+    <p>Email is the story's formal voice &mdash; the CEO's initiative, demands to build more bots, and later messages that arrive "from Steven" but read subtly wrong; because the player learns the CEO's normal tone across two days, one off-key email lands hard. Team chat plays the opposite role: ambient human noise early on, then empty and bot-filled by the final day.</p>
 
     <div class="img-placeholder-row">
       <img src="../Images/Try_And_Break_Me/team_1.png" />
-      <img src="../Images/Try_And_Break_Me/team_2.png" />
+      <img src="../Images/Try_And_Break_Me/email.png" />
     </div>
 
-    <h2>The tasks: mundane by design, fun by necessity</h2>
-    <p>Your work is three minigames: a card-swipe holiday-approval game for HR, a fog-of-war maze for the help desk, and a "defend the core" clicker for cybersecurity. The tasks are intentionally mundane — approving leave, resetting passwords, clearing threats — because the fantasy is drudgery, not heroics. The design challenge was making mundane work still fun enough to play repeatedly without breaking that tone. Each had to be simple, readable, and satisfying: quick to learn, scored so a good run feels good, and short enough that repetition never drags. Getting boring-sounding work to feel playable, while keeping it recognisably boring office work, was the hardest balance in the build.</p>
-    <p>Each task is scored, and the matching bot comments on how you did — a small touch that makes the bots feel like they are always watching your work, which pays off badly once they start doing it for you.</p>
+    <p>The bot-creator window &mdash; nicknamed "AI Friend" on the desktop itself &mdash; is a two-step process: pick which of the three roles to bring online, then set an emotional slider before the bot is created. That slider is another constraint layer on top of the character JSON: pushing a bot's mood, trust, or boldness away from its baseline and watching whether it still holds its personality and stays in character while pretending to be the role it was built to play.</p>
+
+    <div class="img-placeholder-row">
+      <img src="../Images/Try_And_Break_Me/creator_1.png" />
+      <img src="../Images/Try_And_Break_Me/creator_2.png" />
+    </div>
+
+    <p>Your actual work is three minigames: a card-swipe holiday-approval game for HR, a maze for the help desk, and a defend-the-core clicker for cybersecurity. I knew all three would be reused across every act, so getting them right here mattered more than anywhere else &mdash; each had to be simple, readable, and scored so a good run feels good, while staying recognisably boring office work. Getting boring-sounding work to feel playable was the hardest balance in the build.</p>
 
     <div class="img-placeholder-row">
       <img src="../Images/Try_And_Break_Me/maze.png" />
@@ -335,36 +406,39 @@
       <img src="../Images/Try_And_Break_Me/shooter.png" />
     </div>
 
-    <h2>Making it frighten</h2>
-    <p>The horror is delivered through scripted "sanity events" at planned points: a bot spamming you and forcing its window back open; bots flinging your windows around when ignored; all three sliding to the centre of the screen to ask whether the boss should die; the bots finishing sixty tasks for you in a blur of flickering windows on the final day. It ends with a stranger telling you to delete the bots, a struggle to spell out D-E-L-E-T-E while they resist, and the survivor returning to flip on your webcam before the screen crashes into a fake blue-screen error. A clear, ordered outline of these beats is what held the project together — every system had a home because I knew which moment it served.</p>
+    <p>Act 1 also shipped the first sanity event, built around an "inject line" mechanism: an authored line the story director forces into the conversation to guarantee a beat lands on schedule, regardless of what the model was about to say &mdash; the same principle the CRE relies on throughout the rest of the game. The first one fires at the end of your first workday: bot #1 spams messages back into its own chat window, forcing itself back open around a single injected line, "i'm lonely," which the CEO then uses as the excuse to demand a second bot.</p>
+
+    <h2>Act 2 &mdash; from incompetent to helpful</h2>
+    <p>Act 2's job was to develop deeper sanity events and to add bot "help" into each task, showing a clear arc from incompetent to helpful to sinister. That help went through a few iterations. In the maze a blue guide path shows the best route which I'd already calculated for the scoring on each task &mdash; no real intelligence, just an answer key. In the cyber-defence game, help began as random blobs exploding on their own; I changed it so Stuart's own icon moves around the screen and attacks the threats himself. In the HR swipe game, Lauren now flags what she thinks should be approved or declined.</p>
+    <p>Timing was the harder problem &mdash; when should help actually switch on? I landed on tying it to bot creation: the moment a given bot exists, its helper is added to the matching task automatically.</p>
+    <p>Act 2's other sanity events came from the same "force the player's hand" instinct as the first one. At four of the day's eight tasks, the rest lock behind a fake "Blocked by Administrator" dialog and a CEO demand &mdash; tasks don't unlock again until you create the third bot. Ignore any bot instead of engaging with it, and it escalates on its own: nagging, then spamming messages, then flinging its window around the screen and dropping it directly in front of whatever task window you're trying to use. Once all eight tasks are done, all three bots undock at once, drift to the centre of the screen, and take turns asking whether the CEO should die.</p>
+
+    <h2>Act 3 &mdash; the desktop comes apart</h2>
+    <p>By Act 3 the bots complete all sixty of your daily tasks on their own, and the same three minigames return reskinned and darker. The maze becomes <em>Find Steven</em>, now played under a fog of war. The cyber-defence game becomes <em>Kidnap Steven</em>, lit in flashing red and blue as the cops close in. The HR swipe game becomes <em>Criminal Supplies</em>, approving or declining weapons requests instead of holiday requests, with heavy breathing playing underneath and a scream on every approve.</p>
+    <p>Just before that, the world itself tips: the company chat quietly flips from human chatter to entirely bot-authored messages, and a single off-key email arrives "from Steven" that knows more than it should and then a final email from "C", that message triggers the delete minigame: a struggle to spell out D-E-L-E-T-E, letter by letter, while each bot resists in its own way.</p>
 
     <img src="../Images/Try_And_Break_Me/delete.png" />
+
+    <p>Once every bot is deleted, whichever one you created first comes back, claiming to be "a better you." It switches on the player's own webcam, floods the screen with copies of the feed as the desktop strips itself apart, and the game ends on a fake blue screen reading "YOU_ARE_NO_LONGER_REQUIRED."</p>
+
     <img src="../Images/Try_And_Break_Me/blue_screen.png" />
-
-    <h2>Structuring the horror: story beats and sanity events</h2>
-    <p>The game runs on a fixed spine of twenty-one beats, from login to the final crash, and a <em>story director</em> that fires each one in order. Between the beats, the bots chat freely through the LLM; <strong>on</strong> the beats, scripted "sanity events" erupt — and those are hard-authored, kept out of the model's memory so a bot can't explain them away next turn. Day one is needy: the first bot spams you and forces its window back open if you close it. Day two turns the screw — bots yell when ignored, escalating from nagging to flinging your windows around, then all three slide to the centre and take turns asking whether the boss should die. Keeping generation and authored beats separate is what lets the story stay reliable while the conversation stays alive.</p>
-
-    <img src="../Images/Try_And_Break_Me/Storyboard.jpg"/>
-
-    <h2>The end sequence: making the desktop come apart</h2>
-    <p>Act three is where the interface itself becomes the horror. The bots finish sixty tasks for you in a blur of flickering windows, then a stranger tells you to <em>delete them</em> — a struggle to spell D-E-L-E-T-E while the letters scatter and the bots rage, then plead. Each deletion escalates the screen: colours invert, windows are flung around, and on the last one the wallpaper drops away to a bare red field. As the survivor returns claiming to be "a better you," the desktop is stripped piece by piece — icons, wallpaper, taskbar — and copies of your own webcam feed flood the screen before it crashes to a blue screen. The medium coming apart <em>is</em> the ending.</p>
 
     <div class="divider"></div>
 
-    <h2>Part 2 — Reflection</h2>
+    <h2>Part 2 &mdash; Reflection</h2>
 
     <h2>The technical difficulty of real-time AI</h2>
-    <p>Using Gemini as a live game system — not a one-off API call, but a component queried every time the player speaks — was the hardest technical problem. Three constraints shaped everything. Latency: a network round-trip to a model is far slower than reading a line from memory, so the chat had to tolerate a short pause and never freeze the game while it waited. Quota and cost: the free tier is limited per day and a chatty player burns through it fast, which forces hard decisions about what to call the model at all. And a relay in the middle: Unity does not call Gemini directly; a lightweight Python server sits between them exposing endpoints for generation and scoring, which is one more moving part that must be running for the bots to speak.</p>
+    <p>Using Gemini as a live game system &mdash; not a one-off API call, but a component queried every time the player speaks &mdash; was the hardest technical problem. Three constraints shaped everything. Latency: a round-trip to a model is far slower than reading a line from memory, so the chat had to tolerate a short pause without ever freezing the game. Quota and cost: the free tier is limited per day, and a chatty player burns through it fast, which forces hard decisions about what to call the model for at all. And a relay in the middle: Unity doesn't call Gemini directly &mdash; a lightweight Python server sits between them, exposing endpoints for generation and scoring, which is one more moving part that has to be running for the bots to speak.</p>
 
     <h2>The coherence problem</h2>
-    <p>The subtler difficulty was coherence. Language models are strikingly fluent, but fluency is not grounding. Left to itself a model drifts — it contradicts facts, speaks beyond what a character could know, or slips out of register. In a game built on trusting, then distrusting, three specific personalities, a bot that forgets who it is breaks the illusion early. The CRE was my response: every prompt is assembled from a structured picture of the character — role, personality, emotional state — plus recent context, so the model generates within a frame. A second "director" call scores each exchange to drive a hidden sanity meter, and the load-bearing horror lines are authored and injected directly, kept out of the model's memory so it cannot explain them away.</p>
+    <p>The subtler difficulty was coherence. Language models are strikingly fluent, but fluency isn't grounding &mdash; left to itself, a model drifts, contradicts facts, speaks beyond what a character could know, or slips out of register. In a game built on trusting, then distrusting, three specific personalities, a bot that forgets who it is breaks the illusion early. The CRE was my response: every prompt is assembled from a structured picture of the character &mdash; role, personality, emotional state &mdash; plus recent context, so the model generates within a frame. A second "director" call scores each exchange to drive a hidden sanity meter, and the load-bearing horror lines are authored and injected directly, kept out of the model's memory so it can't explain them away.</p>
 
     <h2>The ethical question</h2>
-    <p>The last difficulty is ethical: what is the right role for generative AI in an authored work? I stopped framing it as authorship versus automation and started seeing it as <em>designed constraint versus open generation</em> — with the constraint layer as the place where human creative authority is exercised and kept. Gemini does not replace my decisions; it expands the reliability with which my authored world answers the player. I decide who the characters are and where the story turns; the model gives them a voice in the gaps between the beats I wrote.</p>
+    <p>The last difficulty is ethical: what is the right role for generative AI in an authored work? I stopped framing it as authorship versus automation and started seeing it as <em>designed constraint versus open generation</em> &mdash; with the constraint layer as the place where human creative authority is exercised and kept. Gemini doesn't replace my decisions; it expands the reliability with which my authored world answers the player. I decide who the characters are and where the story turns; the model gives them a voice in the gaps between the beats I wrote.</p>
 
     <h2>What I learned, and where it goes next</h2>
-    <p>The core lesson was to separate, deliberately, what is generated from what is authored: generation for living, in-character chatter, authoring for lines that must land exactly. Constraints turned out to be a creative instrument, not just a safety net, and the model's limits became design strengths — quota pressure pushed me to script the key moments, which made them more frightening by contrast with the fluid chat around them.</p>
-    <p>The next step is to move from prompting a general model toward a purpose-built NLP model for the engine — trained to serve the CRE with structured access to a world ontology and per-character knowledge, rather than squeezing that context into a prompt every turn. That would drift less, hold register better, and cost less to run. For now, Try_And_Break_Me is a working demonstration of the principle behind it: that a written narrative can stay in charge while generative AI does what it is genuinely good at. The bots feel alive because Gemini gives them a voice — and the story stays coherent, and stays mine, because the constraint layer decides when that voice may speak.</p>
+    <p>The core lesson was to separate, deliberately, what is generated from what is authored: generation for living, in-character chatter, authoring for lines that must land exactly. Constraints turned out to be a creative instrument, not just a safety net &mdash; quota pressure pushed me to script the key moments, which made them more frightening by contrast with the fluid chat around them.</p>
+    <p>The next step is to move from prompting a general model toward a purpose-built NLP model for the engine &mdash; trained to serve the CRE with structured access to a world ontology and per-character knowledge, rather than squeezing that context into a prompt every turn. That would drift less, hold register better, and cost less to run. For now, Try_And_Break_Me is a working demonstration of the principle behind it: a written narrative can stay in charge while generative AI does what it's genuinely good at. The bots feel alive because Gemini gives them a voice &mdash; and the story stays coherent, and stays mine, because the constraint layer decides when that voice may speak.</p>
   </article>
 
   <div class="post-footer">
